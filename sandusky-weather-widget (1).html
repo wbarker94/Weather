@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Sandusky, OH weather</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,800&display=swap" rel="stylesheet">
+<style>
+  :root { --ink:#16324a; --soft:#5b7189; --faint:#7b8fa3; --lake1:#e3f1fb; --lake2:#d2e8f7; --rain:#2f8fd6; --line:rgba(22,50,74,.12); }
+  * { box-sizing:border-box; margin:0; padding:0; }
+  html, body { background:transparent; }
+  body { display:flex; justify-content:center; font-family:"Bricolage Grotesque", "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
+
+  .w { container-type:inline-size; width:100%; min-width:220px; max-width:900px; aspect-ratio:856 / 559;
+       position:relative; overflow:hidden; border-radius:16px; color:var(--ink); background:#fff; border:1px solid #e1e8ef; }
+  .in { position:absolute; inset:0; display:grid; grid-template-rows:auto 1fr; padding:3.4cqw 4.2cqw 0; }
+
+  /* Header: place + tabs */
+  .top { display:flex; justify-content:space-between; align-items:center; gap:2cqw; }
+  .city { font-size:3.4cqw; font-weight:600; line-height:1.1; }
+  .upd { font-size:max(2.1cqw, 10px); color:var(--soft); margin-top:.3cqw; }
+  .tabs { display:flex; background:#eef4f9; border-radius:999px; padding:.5cqw; gap:.4cqw; flex:none; }
+  .tab { font:inherit; font-size:max(2.4cqw, 11px); font-weight:600; color:var(--soft); background:none; border:0;
+         padding:1cqw 2.4cqw; border-radius:999px; cursor:pointer; white-space:nowrap; transition:background .2s, color .2s; }
+  .tab[aria-selected="true"] { background:#fff; color:var(--ink); box-shadow:0 1px 3px rgba(22,50,74,.14); }
+  .tab:focus-visible { outline:2px solid var(--rain); outline-offset:2px; }
+
+  .view { min-height:0; display:grid; }
+  .view[hidden] { display:none; }
+  .view.show { animation:fade .35s ease; }
+  @keyframes fade { from { opacity:0; transform:translateY(.8cqw); } to { opacity:1; transform:none; } }
+
+  /* Today view */
+  #v-today { grid-template-rows:1fr auto; }
+  .now { display:flex; align-items:center; justify-content:space-between; gap:2cqw; min-height:0; }
+  .temp { font-size:17cqw; font-weight:800; line-height:.9; letter-spacing:-.04em; }
+  .temp sup { font-size:.45em; vertical-align:.95em; font-weight:600; letter-spacing:0; }
+  .cond { font-size:max(3.6cqw, 15px); font-weight:600; margin-top:.6cqw; }
+  .meta { font-size:max(2.5cqw, 12px); color:var(--soft); margin-top:.5cqw; display:flex; flex-wrap:wrap; column-gap:2.4cqw; }
+  .icon { width:22cqw; height:22cqw; flex:none; margin-right:1cqw; }
+  .icon svg, .si svg { width:100%; height:100%; display:block; }
+
+  .lake { position:relative; margin:0 -4.2cqw; padding:3cqw 4.2cqw 2.6cqw; background:linear-gradient(180deg, var(--lake1), var(--lake2)); }
+  .lake::before { content:""; position:absolute; left:0; right:0; top:-1.4cqw; height:1.6cqw;
+    background:radial-gradient(ellipse 3cqw 1.2cqw at 50% 100%, var(--lake1) 98%, transparent 100%) 0 0 / 6cqw 1.6cqw repeat-x; }
+
+  .strip { display:grid; grid-auto-flow:column; grid-auto-columns:1fr; text-align:center; }
+  .slot { display:flex; flex-direction:column; align-items:center; gap:.4cqw; min-width:0; }
+  .slot + .slot { border-left:1px solid var(--line); }
+  .sn { font-size:max(2.4cqw, 11px); font-weight:600; white-space:nowrap; }
+  .si { width:max(5.6cqw, 22px); height:max(5.6cqw, 22px); }
+  .st { font-size:max(2.5cqw, 11px); font-weight:700; }
+  .sp { font-size:max(2cqw, 10px); color:var(--rain); font-weight:600; min-height:1.2em; }
+
+  /* 7-day view */
+  #v-week { margin:1.6cqw -4.2cqw 0; }
+  #v-week .lake { padding-top:3.4cqw; display:flex; flex-direction:column; }
+  .week { flex:1; min-height:0; display:grid; grid-template-columns:repeat(7, 1fr); text-align:center; }
+  .wd { display:flex; flex-direction:column; align-items:center; min-height:0; padding:0 .4cqw; }
+  .wd + .wd { border-left:1px solid var(--line); }
+  .wd.today .wn { color:var(--rain); }
+  .wn { font-size:max(2.4cqw, 11px); font-weight:700; }
+  .wdate { font-size:max(1.9cqw, 9px); color:var(--faint); }
+  .wd .si { margin:.8cqw 0 .4cqw; }
+  .whi { font-size:max(2.6cqw, 11px); font-weight:700; }
+  .wlo { font-size:max(2.3cqw, 10px); color:var(--faint); }
+  .track { flex:1; min-height:3cqw; width:1.3cqw; margin:.8cqw 0; border-radius:999px; background:rgba(22,50,74,.08); position:relative; }
+  .bar { position:absolute; left:0; right:0; border-radius:999px; background:linear-gradient(180deg, #f5a03a, #5aaee6); }
+  .wd .sp { margin-top:.4cqw; }
+
+  .msg { position:absolute; inset:0; display:none; place-items:center; text-align:center; padding:6cqw; font-size:max(3.2cqw, 13px); line-height:1.4; color:var(--soft); }
+  .w.err .view { visibility:hidden; } .w.err .msg { display:grid; }
+  .w.loading .view { opacity:0; }
+
+  /* Narrow phones */
+  @container (max-width: 399px) {
+    .in { padding:4.5cqw 5.5cqw 0; }
+    .city { font-size:6cqw; } .upd { display:none; }
+    .tab { font-size:10px; padding:4px 8px; } .tabs { padding:2px; }
+    #v-today { grid-template-rows:1fr; }
+    #v-today .lake { display:none; }
+    .temp { font-size:24cqw; } .cond { font-size:6cqw; } .meta { font-size:5cqw; }
+    .meta .x { display:none; }
+    .icon { width:28cqw; height:28cqw; margin-right:0; }
+    #v-week { margin:2cqw -5.5cqw 0; }
+    #v-week .lake { padding:2cqw 2cqw 1.5cqw; overflow-x:auto; }
+    #v-week .lake::before { display:none; }
+    .week { grid-template-columns:repeat(7, minmax(40px, 1fr)); }
+    .track, .wdate, .wd .sp { display:none; }
+    .wd .si { width:20px; height:20px; margin:2px 0; }
+    .wn, .whi { font-size:10px; } .wlo { font-size:9px; }
+  }
+  @media (prefers-reduced-motion: reduce) { .view.show { animation:none; } .tab { transition:none; } }
+</style>
+</head>
+<body>
+<div class="w loading" id="w" role="region" aria-label="Weather for Sandusky, Ohio">
+  <div class="in">
+    <div class="top">
+      <div><div class="city">Sandusky, OH</div><div class="upd" id="upd">Loading weather…</div></div>
+      <div class="tabs" role="tablist" aria-label="Forecast view">
+        <button class="tab" role="tab" id="t-today" aria-controls="v-today" aria-selected="true">Today</button>
+        <button class="tab" role="tab" id="t-week" aria-controls="v-week" aria-selected="false" tabindex="-1">7 days</button>
+      </div>
+    </div>
+
+    <section class="view" id="v-today" role="tabpanel" aria-labelledby="t-today">
+      <div class="now">
+        <div>
+          <div class="temp" id="temp" aria-live="polite"></div>
+          <div class="cond" id="cond"></div>
+          <div class="meta"><span id="hl"></span><span class="x" id="feels"></span><span class="x" id="wind"></span></div>
+        </div>
+        <div class="icon" id="icon" aria-hidden="true"></div>
+      </div>
+      <div class="lake"><div class="strip" id="hours"></div></div>
+    </section>
+
+    <section class="view" id="v-week" role="tabpanel" aria-labelledby="t-week" hidden>
+      <div class="lake"><div class="week" id="week"></div></div>
+    </section>
+  </div>
+  <div class="msg" id="msg">Weather isn’t loading right now. It will try again in a few minutes.</div>
+</div>
+
+<script>
+(function () {
+  var URL_API = "https://api.open-meteo.com/v1/forecast?latitude=41.4489&longitude=-82.708" +
+    "&current=temperature_2m,apparent_temperature,weather_code,wind_speed_10m,is_day" +
+    "&hourly=temperature_2m,weather_code,precipitation_probability,is_day" +
+    "&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max" +
+    "&temperature_unit=fahrenheit&wind_speed_unit=mph&timezone=America%2FNew_York&forecast_days=7";
+  var REFRESH = 15 * 60 * 1000;
+  var w = document.getElementById("w");
+  var $ = function (id) { return document.getElementById(id); };
+
+  function info(c) {
+    if (c === 0) return ["Clear", "sun"];
+    if (c === 1) return ["Mostly clear", "sun"];
+    if (c === 2) return ["Partly cloudy", "part"];
+    if (c === 3) return ["Cloudy", "cloud"];
+    if (c === 45 || c === 48) return ["Fog", "fog"];
+    if (c >= 51 && c <= 57) return ["Drizzle", "rain"];
+    if ((c >= 61 && c <= 67) || (c >= 80 && c <= 82)) return [c >= 80 ? "Showers" : (c >= 65 ? "Heavy rain" : "Rain"), "rain"];
+    if ((c >= 71 && c <= 77) || c === 85 || c === 86) return ["Snow", "snow"];
+    if (c >= 95) return ["Thunderstorms", "storm"];
+    return ["Cloudy", "cloud"];
+  }
+
+  var SUN = '<circle cx="50" cy="50" r="18" fill="#FFC531"/><g stroke="#FFC531" stroke-width="6" stroke-linecap="round"><path d="M50 14v8M50 78v8M14 50h8M78 50h8M24.5 24.5l5.7 5.7M69.8 69.8l5.7 5.7M24.5 75.5l5.7-5.7M69.8 30.2l5.7-5.7"/></g>';
+  var MOON = '<path d="M62 18a32 32 0 1 0 20 52A26 26 0 0 1 62 18z" fill="#F2C94C"/>';
+  function CLOUD(x, y, s, f) { return '<g transform="translate(' + x + ' ' + y + ') scale(' + s + ')"><path d="M26 70h50a16 16 0 0 0 0-32 22 22 0 0 0-42-6 18 18 0 0 0-8 38z" fill="' + (f || "#c3d2e0") + '"/></g>'; }
+  function svg(kind, day) {
+    var orb = day ? SUN : MOON, b;
+    switch (kind) {
+      case "sun": b = orb; break;
+      case "part": b = '<g transform="translate(-4 -4) scale(.78)">' + orb + '</g>' + CLOUD(8, 10, .9); break;
+      case "cloud": b = CLOUD(-4, -16, 1.05, "#e4ecf3") + CLOUD(4, 4, 1); break;
+      case "fog": b = CLOUD(0, -12, 1, "#dbe5ee") + '<g stroke="#b8c7d6" stroke-width="5" stroke-linecap="round"><path d="M20 72h60M28 84h46"/></g>'; break;
+      case "rain": b = CLOUD(0, -14, 1) + '<g stroke="#3d9be0" stroke-width="5" stroke-linecap="round"><path d="M34 66l-5 12M52 66l-5 12M70 66l-5 12"/></g>'; break;
+      case "snow": b = CLOUD(0, -14, 1) + '<g fill="#8fb3d4"><circle cx="32" cy="72" r="4"/><circle cx="50" cy="80" r="4"/><circle cx="68" cy="72" r="4"/></g>'; break;
+      default: b = CLOUD(0, -14, 1, "#b9c8d6") + '<path d="M52 60l-12 18h10l-6 14 16-20H50l6-12z" fill="#FFC531"/>';
+    }
+    return '<svg viewBox="0 0 100 100">' + b + '</svg>';
+  }
+  function hourLabel(t) { var h = +t.slice(11, 13); return (h % 12 || 12) + (h < 12 ? " AM" : " PM"); }
+  function pct(p) { return p != null && p >= 20 ? p + "%" : ""; }
+  var r = Math.round;
+
+  function render(d) {
+    var cur = d.current, day = cur.is_day === 1, i = info(cur.weather_code), dl = d.daily, hr = d.hourly;
+
+    // Today
+    $("temp").innerHTML = r(cur.temperature_2m) + "<sup>°F</sup>";
+    $("cond").textContent = i[0];
+    $("hl").textContent = "H " + r(dl.temperature_2m_max[0]) + "°  L " + r(dl.temperature_2m_min[0]) + "°";
+    $("feels").textContent = "Feels like " + r(cur.apparent_temperature) + "°";
+    $("wind").textContent = "Wind " + r(cur.wind_speed_10m) + " mph";
+    $("icon").innerHTML = svg(i[1], day);
+
+    var start = 0, key = cur.time.slice(0, 13);
+    for (var k = 0; k < hr.time.length; k++) if (hr.time[k].slice(0, 13) === key) { start = k; break; }
+    var h = '<div class="slot"><div class="sn">Now</div><div class="si" aria-hidden="true">' + svg(i[1], day) +
+      '</div><div class="st">' + r(cur.temperature_2m) + '°</div><div class="sp">' + pct(hr.precipitation_probability[start]) + '</div></div>';
+    for (var s = 1; s <= 5; s++) {
+      var j = start + s * 2; if (j >= hr.time.length) break;
+      h += '<div class="slot"><div class="sn">' + hourLabel(hr.time[j]) + '</div><div class="si" aria-hidden="true">' +
+        svg(info(hr.weather_code[j])[1], hr.is_day[j] === 1) + '</div><div class="st">' + r(hr.temperature_2m[j]) +
+        '°</div><div class="sp">' + pct(hr.precipitation_probability[j]) + '</div></div>';
+    }
+    $("hours").innerHTML = h;
+
+    // 7 days
+    var lo = Math.min.apply(null, dl.temperature_2m_min), hi = Math.max.apply(null, dl.temperature_2m_max), span = Math.max(hi - lo, 1);
+    var wk = "";
+    for (var n = 0; n < dl.time.length && n < 7; n++) {
+      var dt = new Date(dl.time[n] + "T12:00:00");
+      var name = n === 0 ? "Today" : dt.toLocaleDateString("en-US", { weekday: "short" });
+      var date = dt.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+      var mx = dl.temperature_2m_max[n], mn = dl.temperature_2m_min[n], di = info(dl.weather_code[n]);
+      wk += '<div class="wd' + (n === 0 ? ' today' : '') + '" aria-label="' + name + ', ' + di[0] + ', high ' + r(mx) + ', low ' + r(mn) + '">' +
+        '<div class="wn">' + name + '</div><div class="wdate">' + date + '</div>' +
+        '<div class="si" aria-hidden="true">' + svg(di[1], true) + '</div>' +
+        '<div class="whi">' + r(mx) + '°</div>' +
+        '<div class="track"><div class="bar" style="top:' + ((hi - mx) / span * 100).toFixed(1) + '%;bottom:' + ((mn - lo) / span * 100).toFixed(1) + '%"></div></div>' +
+        '<div class="wlo">' + r(mn) + '°</div><div class="sp">' + pct(dl.precipitation_probability_max[n]) + '</div></div>';
+    }
+    $("week").innerHTML = wk;
+
+    $("upd").textContent = "Updated " + new Date().toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" });
+    w.classList.remove("loading", "err");
+  }
+
+  function load() {
+    fetch(URL_API).then(function (res) { if (!res.ok) throw new Error(res.status); return res.json(); })
+      .then(render)
+      .catch(function () { if (w.classList.contains("loading")) { w.classList.remove("loading"); w.classList.add("err"); } });
+  }
+
+  // Tabs
+  var tabs = [$("t-today"), $("t-week")];
+  function select(t) {
+    tabs.forEach(function (b) {
+      var on = b === t, v = $(b.getAttribute("aria-controls"));
+      b.setAttribute("aria-selected", on); b.tabIndex = on ? 0 : -1;
+      v.hidden = !on; v.classList.toggle("show", on);
+    });
+  }
+  tabs.forEach(function (b, idx) {
+    b.addEventListener("click", function () { select(b); });
+    b.addEventListener("keydown", function (e) {
+      if (e.key === "ArrowRight" || e.key === "ArrowLeft") { var t = tabs[(idx + 1) % 2]; select(t); t.focus(); e.preventDefault(); }
+    });
+  });
+
+  load();
+  setInterval(load, REFRESH);
+})();
+</script>
+</body>
+</html>
